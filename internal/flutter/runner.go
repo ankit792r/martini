@@ -1,0 +1,31 @@
+package flutter
+
+import "fmt"
+
+func RunCommands(session *Session, selected []CommandID) error {
+	for _, id := range selected {
+		cmd, ok := CommandByID(id)
+		if !ok {
+			return fmt.Errorf("unknown command: %s", id)
+		}
+
+		fmt.Printf("\nRunning: %s\n", cmd.Label)
+
+		switch id {
+		case CmdUpdatePackageName:
+			if err := runUpdatePackageName(session); err != nil {
+				return err
+			}
+		case CmdGenerateUploadKeystore:
+			fmt.Printf("  project: %s\n", session.ProjectPath)
+			fmt.Println("  status: generate upload keystore (not implemented yet)")
+		case CmdUpdateSigningConfig:
+			fmt.Printf("  project: %s\n", session.ProjectPath)
+			fmt.Println("  status: update signing config (not implemented yet)")
+		default:
+			return fmt.Errorf("unsupported command: %s", id)
+		}
+	}
+
+	return nil
+}

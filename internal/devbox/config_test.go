@@ -25,7 +25,7 @@ func TestBuildConfig(t *testing.T) {
 	}
 
 	ps1 := cfg.Shell.InitHook[len(cfg.Shell.InitHook)-1]
-	wantPS1 := `export PS1="(myapp) [\$(pwd)] -> "`
+	wantPS1 := `export PS1="(myapp) [\W] -> "`
 	if ps1 != wantPS1 {
 		t.Fatalf("unexpected PS1 hook: %q", ps1)
 	}
