@@ -80,8 +80,13 @@ func (m *model) startNextPrompt() {
 			continue
 		}
 
-		if m.promptIndex < len(cmd.Prompts) {
-			m.input = newInput(cmd.Prompts[m.promptIndex])
+		if m.promptIndex < len(cmd.Fields) {
+			field := cmd.Fields[m.promptIndex]
+			if field.Secret {
+				m.input = newSecretInput(field.Label)
+			} else {
+				m.input = newInput(field.Label)
+			}
 			return
 		}
 
@@ -188,6 +193,21 @@ func (m *model) advanceInput() bool {
 
 	case phaseDetails:
 		id := m.selectedOrder[m.commandIndex]
+		cmd, ok := CommandByID(id)
+		if !ok {
+			return false
+		}
+
+		field := cmd.Fields[m.promptIndex]
+		if value == "" {
+			if field.Required {
+				return false
+			}
+			if field.Default != "" {
+				value = field.Default
+			}
+		}
+
 		answers := m.session.AnswersFor(id)
 		answers = append(answers, value)
 		m.session.SetAnswers(id, answers)

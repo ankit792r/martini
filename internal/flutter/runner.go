@@ -17,8 +17,9 @@ func RunCommands(session *Session, selected []CommandID) error {
 				return err
 			}
 		case CmdGenerateUploadKeystore:
-			fmt.Printf("  project: %s\n", session.ProjectPath)
-			fmt.Println("  status: generate upload keystore (not implemented yet)")
+			if err := runGenerateUploadKeystore(session); err != nil {
+				return err
+			}
 		case CmdUpdateSigningConfig:
 			fmt.Printf("  project: %s\n", session.ProjectPath)
 			fmt.Println("  status: update signing config (not implemented yet)")

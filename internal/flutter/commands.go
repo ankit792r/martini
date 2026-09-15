@@ -8,11 +8,18 @@ const (
 	CmdUpdateSigningConfig    CommandID = "update-signing-config"
 )
 
+type PromptField struct {
+	Label    string
+	Secret   bool
+	Default  string
+	Required bool
+}
+
 type Command struct {
-	ID      CommandID
-	Label   string
-	Flag    string
-	Prompts []string
+	ID     CommandID
+	Label  string
+	Flag   string
+	Fields []PromptField
 }
 
 var AllCommands = []Command{
@@ -20,15 +27,22 @@ var AllCommands = []Command{
 		ID:    CmdUpdatePackageName,
 		Label: "Update Gradle package name",
 		Flag:  "update-package-name",
-		Prompts: []string{
-			"Old package name: ",
-			"New package name: ",
+		Fields: []PromptField{
+			{Label: "Old package name: ", Required: true},
+			{Label: "New package name: ", Required: true},
 		},
 	},
 	{
 		ID:    CmdGenerateUploadKeystore,
 		Label: "Generate upload keystore",
 		Flag:  "generate-upload-keystore",
+		Fields: []PromptField{
+			{Label: "Keystore name: ", Default: "upload-keystore"},
+			{Label: "Store password: ", Secret: true, Required: true},
+			{Label: "Key password (blank = store password): ", Secret: true},
+			{Label: "Key alias: ", Default: "upload"},
+			{Label: "Certificate common name: ", Default: "Android Upload"},
+		},
 	},
 	{
 		ID:    CmdUpdateSigningConfig,
