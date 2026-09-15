@@ -7,6 +7,7 @@ const (
 	CmdGenerateUploadKeystore CommandID = "generate-upload-keystore"
 	CmdUpdateSigningConfig    CommandID = "update-signing-config"
 	CmdBuildRelease           CommandID = "build-release"
+	CmdUpdateIcons            CommandID = "update-icons"
 )
 
 type PromptField struct {
@@ -54,6 +55,14 @@ var AllCommands = []Command{
 		ID:    CmdBuildRelease,
 		Label: "Build release APKs and AAB",
 		Flag:  "build-release",
+	},
+	{
+		ID:    CmdUpdateIcons,
+		Label: "Update Android, iOS, and web icons",
+		Flag:  "update-icons",
+		Fields: []PromptField{
+			{Label: "IconKitchen output path: ", Required: true},
+		},
 	},
 }
 

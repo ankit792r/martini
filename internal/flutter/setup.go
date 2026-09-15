@@ -14,6 +14,9 @@ func Run(opts Options) error {
 
 	if !needsInteractive(opts) {
 		session := NewSession(opts.ProjectPath)
+		if opts.IconsPath != "" {
+			session.SetAnswers(CmdUpdateIcons, []string{opts.IconsPath})
+		}
 		return RunCommands(session, opts.Preselected)
 	}
 
@@ -44,6 +47,9 @@ func needsInteractive(opts Options) bool {
 	for _, id := range opts.Preselected {
 		cmd, ok := CommandByID(id)
 		if !ok {
+			continue
+		}
+		if id == CmdUpdateIcons && opts.IconsPath != "" {
 			continue
 		}
 		if len(cmd.Fields) > 0 {

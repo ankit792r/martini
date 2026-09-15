@@ -15,6 +15,8 @@ var (
 	flutterGenerateKeystore    bool
 	flutterUpdateSigningConfig bool
 	flutterBuildRelease        bool
+	flutterUpdateIcons         bool
+	flutterIconsPath           string
 )
 
 var flutterCmd = &cobra.Command{
@@ -27,11 +29,13 @@ var flutterCmd = &cobra.Command{
 			"generate-upload-keystore": flutterGenerateKeystore,
 			"update-signing-config":    flutterUpdateSigningConfig,
 			"build-release":            flutterBuildRelease,
+			"update-icons":             flutterUpdateIcons,
 		}
 
 		preselected := flutter.CommandsFromFlags(flags)
 		if err := flutter.Run(flutter.Options{
 			ProjectPath: flutterProjectPath,
+			IconsPath:   flutterIconsPath,
 			Preselected: preselected,
 		}); err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
@@ -48,4 +52,6 @@ func init() {
 	flutterCmd.Flags().BoolVar(&flutterGenerateKeystore, "generate-upload-keystore", false, "Generate upload keystore")
 	flutterCmd.Flags().BoolVar(&flutterUpdateSigningConfig, "update-signing-config", false, "Update signing config")
 	flutterCmd.Flags().BoolVar(&flutterBuildRelease, "build-release", false, "Build release APKs and AAB")
+	flutterCmd.Flags().BoolVar(&flutterUpdateIcons, "update-icons", false, "Update Android, iOS, and web icons from IconKitchen output")
+	flutterCmd.Flags().StringVar(&flutterIconsPath, "icons-path", "", "IconKitchen output directory")
 }

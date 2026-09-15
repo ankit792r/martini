@@ -36,6 +36,7 @@ type model struct {
 
 type Options struct {
 	ProjectPath string
+	IconsPath   string
 	Preselected []CommandID
 }
 

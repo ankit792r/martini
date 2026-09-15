@@ -3,6 +3,7 @@ package flutter
 import (
 	"fmt"
 
+	"martini/internal/flutter/icons"
 	"martini/internal/flutter/keystore"
 	"martini/internal/flutter/pkgrename"
 	"martini/internal/flutter/release"
@@ -28,6 +29,8 @@ func RunCommands(session *Session, selected []CommandID) error {
 			err = signing.Run(session.ProjectPath)
 		case CmdBuildRelease:
 			err = release.Run(session.ProjectPath)
+		case CmdUpdateIcons:
+			err = icons.Run(session.ProjectPath, session.AnswersFor(CmdUpdateIcons))
 		default:
 			return fmt.Errorf("unsupported command: %s", id)
 		}
