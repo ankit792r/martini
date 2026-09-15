@@ -1,11 +1,13 @@
-package flutter
+package keystore
 
 import (
 	"fmt"
+
+	"martini/internal/flutter/gradle"
 )
 
-func runGenerateUploadKeystore(session *Session) error {
-	cfg := keystoreConfigFromAnswers(session.AnswersFor(CmdGenerateUploadKeystore))
+func Run(projectPath string, answers []string) error {
+	cfg := configFromAnswers(answers)
 	if cfg.StorePassword == "" {
 		return fmt.Errorf("generate upload keystore: store password is required")
 	}
@@ -13,14 +15,14 @@ func runGenerateUploadKeystore(session *Session) error {
 		cfg.KeyPassword = cfg.StorePassword
 	}
 
-	fmt.Printf("Generating upload keystore for %s\n", session.ProjectPath)
+	fmt.Printf("Generating upload keystore for %s\n", projectPath)
 
-	result, err := generateUploadKeystore(session.ProjectPath, cfg)
+	result, err := Generate(projectPath, cfg)
 	if err != nil {
 		return err
 	}
 
-	if err := applySigningConfig(session.ProjectPath, SigningConfig{
+	if err := gradle.Apply(projectPath, gradle.Properties{
 		StoreFile:     result.HomePath,
 		StorePassword: result.StorePassword,
 		KeyPassword:   result.KeyPassword,
@@ -32,7 +34,7 @@ func runGenerateUploadKeystore(session *Session) error {
 	fmt.Printf("  home keystore: %s\n", result.HomePath)
 	fmt.Printf("  project keystore: %s\n", result.ProjectPath)
 	fmt.Printf("  credentials: %s\n", result.CredentialsPath)
-	fmt.Printf("  key.properties: %s/android/key.properties\n", session.ProjectPath)
+	fmt.Printf("  key.properties: %s/android/key.properties\n", projectPath)
 	fmt.Println("  build.gradle.kts updated for release signing")
 	fmt.Println("  status: upload keystore setup completed")
 

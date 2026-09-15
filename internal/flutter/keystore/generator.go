@@ -1,4 +1,4 @@
-package flutter
+package keystore
 
 import (
 	"bytes"
@@ -23,7 +23,7 @@ const (
 	defaultKeySize     = 2048
 )
 
-type KeystoreConfig struct {
+type Config struct {
 	Name          string
 	StorePassword string
 	KeyPassword   string
@@ -31,7 +31,7 @@ type KeystoreConfig struct {
 	CommonName    string
 }
 
-type KeystoreResult struct {
+type Result struct {
 	HomePath      string
 	ProjectPath   string
 	Credentials   string
@@ -41,7 +41,7 @@ type KeystoreResult struct {
 	KeyPassword   string
 }
 
-func generateUploadKeystore(projectPath string, cfg KeystoreConfig) (*KeystoreResult, error) {
+func Generate(projectPath string, cfg Config) (*Result, error) {
 	if strings.TrimSpace(cfg.KeyPassword) == "" {
 		cfg.KeyPassword = cfg.StorePassword
 	}
@@ -51,7 +51,7 @@ func generateUploadKeystore(projectPath string, cfg KeystoreConfig) (*KeystoreRe
 	if strings.TrimSpace(cfg.CommonName) == "" {
 		cfg.CommonName = "Android Upload"
 	}
-	if err := validateKeystoreConfig(cfg); err != nil {
+	if err := validateConfig(cfg); err != nil {
 		return nil, err
 	}
 
@@ -94,7 +94,7 @@ func generateUploadKeystore(projectPath string, cfg KeystoreConfig) (*KeystoreRe
 		return nil, fmt.Errorf("write credentials file: %w", err)
 	}
 
-	return &KeystoreResult{
+	return &Result{
 		HomePath:        homeKeystorePath,
 		ProjectPath:     projectKeystorePath,
 		Credentials:     credentials,
@@ -105,7 +105,7 @@ func generateUploadKeystore(projectPath string, cfg KeystoreConfig) (*KeystoreRe
 	}, nil
 }
 
-func validateKeystoreConfig(cfg KeystoreConfig) error {
+func validateConfig(cfg Config) error {
 	if strings.TrimSpace(cfg.Name) == "" {
 		return fmt.Errorf("keystore name is required")
 	}
@@ -124,7 +124,7 @@ func validateKeystoreConfig(cfg KeystoreConfig) error {
 	return nil
 }
 
-func createJKS(cfg KeystoreConfig) ([]byte, *x509.Certificate, error) {
+func createJKS(cfg Config) ([]byte, *x509.Certificate, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, defaultKeySize)
 	if err != nil {
 		return nil, nil, fmt.Errorf("generate rsa key: %w", err)
@@ -180,7 +180,7 @@ func createJKS(cfg KeystoreConfig) ([]byte, *x509.Certificate, error) {
 	return buf.Bytes(), cert, nil
 }
 
-func formatCredentials(cfg KeystoreConfig, homePath, projectPath string, cert *x509.Certificate) string {
+func formatCredentials(cfg Config, homePath, projectPath string, cert *x509.Certificate) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Upload keystore credentials\n")
 	fmt.Fprintf(&b, "===========================\n\n")
@@ -225,8 +225,8 @@ func copyFile(src, dst string) error {
 	return out.Close()
 }
 
-func keystoreConfigFromAnswers(answers []string) KeystoreConfig {
-	cfg := KeystoreConfig{
+func configFromAnswers(answers []string) Config {
+	cfg := Config{
 		Name:       "upload-keystore",
 		Alias:      defaultKeyAlias,
 		CommonName: "Android Upload",

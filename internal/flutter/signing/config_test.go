@@ -1,4 +1,4 @@
-package flutter
+package signing
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestResolveSigningConfigFromKeyProperties(t *testing.T) {
+func TestResolveFromKeyProperties(t *testing.T) {
 	dir := t.TempDir()
 	androidDir := filepath.Join(dir, "android")
 	if err := os.MkdirAll(androidDir, 0o755); err != nil {
@@ -24,7 +24,7 @@ func TestResolveSigningConfigFromKeyProperties(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cfg, err := resolveSigningConfig(dir)
+	cfg, err := Resolve(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,7 @@ func TestResolveSigningConfigFromKeyProperties(t *testing.T) {
 	}
 }
 
-func TestResolveSigningConfigFromCredentialsFile(t *testing.T) {
+func TestResolveFromCredentialsFile(t *testing.T) {
 	dir := t.TempDir()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
@@ -57,7 +57,7 @@ func TestResolveSigningConfigFromCredentialsFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cfg, err := resolveSigningConfig(dir)
+	cfg, err := Resolve(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +66,7 @@ func TestResolveSigningConfigFromCredentialsFile(t *testing.T) {
 	}
 }
 
-func TestUpdateSigningConfigUpdatesGradle(t *testing.T) {
+func TestRunUpdatesGradle(t *testing.T) {
 	dir := t.TempDir()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
@@ -109,8 +109,7 @@ android {
 		t.Fatal(err)
 	}
 
-	session := NewSession(dir)
-	if err := runUpdateSigningConfig(session); err != nil {
+	if err := Run(dir); err != nil {
 		t.Fatal(err)
 	}
 

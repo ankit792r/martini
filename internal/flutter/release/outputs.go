@@ -1,4 +1,4 @@
-package flutter
+package release
 
 import (
 	"archive/zip"

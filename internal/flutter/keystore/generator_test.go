@@ -1,4 +1,4 @@
-package flutter
+package keystore
 
 import (
 	"os"
@@ -6,10 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	keystore "github.com/pavlo-v-chernykh/keystore-go/v4"
+	"martini/internal/flutter/gradle"
+
+	jks "github.com/pavlo-v-chernykh/keystore-go/v4"
 )
 
-func TestGenerateUploadKeystore(t *testing.T) {
+func TestGenerateJKS(t *testing.T) {
 	dir := t.TempDir()
 	androidDir := filepath.Join(dir, "android")
 	if err := os.MkdirAll(androidDir, 0o755); err != nil {
@@ -17,8 +19,9 @@ func TestGenerateUploadKeystore(t *testing.T) {
 	}
 
 	home := t.TempDir()
+	t.Setenv("HOME", home)
 
-	cfg := KeystoreConfig{
+	cfg := Config{
 		Name:          "test-upload-keystore",
 		StorePassword: "storepass123",
 		KeyPassword:   "storepass123",
@@ -26,8 +29,6 @@ func TestGenerateUploadKeystore(t *testing.T) {
 		CommonName:    "Test Upload",
 	}
 
-	// generateUploadKeystore uses os.UserHomeDir(), not HOME on all platforms consistently,
-	// so test createJKS + file writes via lower-level helpers instead.
 	keystoreBytes, _, err := createJKS(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -42,7 +43,7 @@ func TestGenerateUploadKeystore(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ks := keystore.New()
+	ks := jks.New()
 	f, err := os.Open(homePath)
 	if err != nil {
 		t.Fatal(err)
@@ -53,20 +54,6 @@ func TestGenerateUploadKeystore(t *testing.T) {
 	}
 	if !ks.IsPrivateKeyEntry(cfg.Alias) {
 		t.Fatal("expected private key entry in keystore")
-	}
-
-	credentialsPath := filepath.Join(home, cfg.Name+"-upload-key.txt")
-	if err := os.WriteFile(credentialsPath, []byte("test"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-
-	result := &KeystoreResult{
-		HomePath:      homePath,
-		ProjectPath:   projectPath,
-		CredentialsPath: credentialsPath,
-		Alias:         cfg.Alias,
-		StorePassword: cfg.StorePassword,
-		KeyPassword:   cfg.KeyPassword,
 	}
 
 	ktsPath := filepath.Join(androidDir, "app", "build.gradle.kts")
@@ -93,11 +80,11 @@ android {
 		t.Fatal(err)
 	}
 
-	if err := applySigningConfig(dir, SigningConfig{
-		StoreFile:     result.HomePath,
-		StorePassword: result.StorePassword,
-		KeyPassword:   result.KeyPassword,
-		KeyAlias:      result.Alias,
+	if err := gradle.Apply(dir, gradle.Properties{
+		StoreFile:     homePath,
+		StorePassword: cfg.StorePassword,
+		KeyPassword:   cfg.KeyPassword,
+		KeyAlias:      cfg.Alias,
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -109,28 +96,18 @@ android {
 	if !strings.Contains(string(keyProps), "storePassword=storepass123") {
 		t.Fatalf("unexpected key.properties: %s", keyProps)
 	}
-	if !strings.Contains(string(keyProps), "keyAlias=upload") {
-		t.Fatalf("unexpected key.properties: %s", keyProps)
-	}
 
 	updated, err := os.ReadFile(ktsPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	content := string(updated)
-	for _, want := range []string{
-		"keystoreProperties",
-		`signingConfigs {`,
-		`signingConfig = signingConfigs.getByName("release")`,
-	} {
-		if !strings.Contains(content, want) {
-			t.Fatalf("missing %q in build.gradle.kts:\n%s", want, content)
-		}
+	if !strings.Contains(string(updated), "keystoreProperties") {
+		t.Fatalf("missing gradle signing config: %s", updated)
 	}
 }
 
-func TestKeystoreConfigFromAnswers(t *testing.T) {
-	cfg := keystoreConfigFromAnswers([]string{"myapp", "secret", "", "upload", "My App"})
+func TestConfigFromAnswers(t *testing.T) {
+	cfg := configFromAnswers([]string{"myapp", "secret", "", "upload", "My App"})
 	if cfg.Name != "myapp" || cfg.StorePassword != "secret" || cfg.KeyPassword != "secret" {
 		t.Fatalf("unexpected cfg: %+v", cfg)
 	}

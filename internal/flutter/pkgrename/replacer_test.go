@@ -1,4 +1,4 @@
-package flutter
+package pkgrename
 
 import (
 	"os"
@@ -46,7 +46,7 @@ android {
 		}
 	}
 
-	result, err := updatePackageName(dir, "com.example.oldapp", "com.example.newapp")
+	result, err := Update(dir, "com.example.oldapp", "com.example.newapp")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ android {
 }
 
 func TestUpdatePackageNameMissingProjectPath(t *testing.T) {
-	_, err := updatePackageName("/path/that/does/not/exist", "com.old.app", "com.new.app")
+	_, err := Update("/path/that/does/not/exist", "com.old.app", "com.new.app")
 	if err == nil {
 		t.Fatal("expected error for missing project path")
 	}
@@ -101,7 +101,7 @@ func TestUpdatePackageNameRenamesJavaSourceDir(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result, err := updatePackageName(dir, "com.example.oldapp", "com.example.newapp")
+	result, err := Update(dir, "com.example.oldapp", "com.example.newapp")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +126,7 @@ func TestUpdatePackageNameRenamesWhenParentSegmentChanges(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result, err := updatePackageName(dir, "com.example.textpert", "com.system74.textpert")
+	result, err := Update(dir, "com.example.textpert", "com.system74.textpert")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,7 +161,7 @@ func TestUpdatePackageNameSkipsHiddenPaths(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result, err := updatePackageName(dir, "com.example.oldapp", "com.example.newapp")
+	result, err := Update(dir, "com.example.oldapp", "com.example.newapp")
 	if err != nil {
 		t.Fatal(err)
 	}

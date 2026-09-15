@@ -1,4 +1,4 @@
-package flutter
+package gradle
 
 import (
 	"fmt"
@@ -7,6 +7,15 @@ import (
 	"runtime"
 	"strings"
 )
+
+const DefaultUploadAlias = "upload"
+
+type Properties struct {
+	StorePassword string
+	KeyPassword   string
+	KeyAlias      string
+	StoreFile     string
+}
 
 const (
 	keystoreImportsKotlin = "import java.util.Properties\nimport java.io.FileInputStream\n"
@@ -29,18 +38,41 @@ if (keystorePropertiesFile.exists()) {
 `
 )
 
-func writeKeyProperties(path string, result *KeystoreResult) error {
+func Apply(projectPath string, props Properties) error {
+	keyPropertiesPath := filepath.Join(projectPath, "android", "key.properties")
+	if err := WriteKeyProperties(keyPropertiesPath, props); err != nil {
+		return err
+	}
+	return UpdateProjectSigning(projectPath)
+}
+
+func WriteKeyProperties(path string, props Properties) error {
 	content := fmt.Sprintf(
 		"storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=%s\n",
-		result.StorePassword,
-		result.KeyPassword,
-		result.Alias,
-		gradleStoreFilePath(result.HomePath),
+		props.StorePassword,
+		props.KeyPassword,
+		props.KeyAlias,
+		storeFilePath(props.StoreFile),
 	)
 	return os.WriteFile(path, []byte(content), 0o600)
 }
 
-func gradleStoreFilePath(path string) string {
+func UpdateProjectSigning(projectPath string) error {
+	androidDir := filepath.Join(projectPath, "android")
+	ktsPath := filepath.Join(androidDir, "app", "build.gradle.kts")
+	if _, err := os.Stat(ktsPath); err == nil {
+		return updateBuildGradleKTS(ktsPath)
+	}
+
+	gradlePath := filepath.Join(androidDir, "app", "build.gradle")
+	if _, err := os.Stat(gradlePath); err == nil {
+		return updateBuildGradleGroovy(gradlePath)
+	}
+
+	return fmt.Errorf("build.gradle.kts or build.gradle not found under android/app")
+}
+
+func storeFilePath(path string) string {
 	clean := filepath.Clean(path)
 	if runtime.GOOS == "windows" {
 		return strings.ReplaceAll(clean, `\`, `\\`)

@@ -1,4 +1,4 @@
-package flutter
+package signing
 
 import (
 	"bufio"
@@ -6,48 +6,27 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"martini/internal/flutter/gradle"
 )
 
-type SigningConfig struct {
-	StorePassword string
-	KeyPassword   string
-	KeyAlias      string
-	StoreFile     string
-}
-
-func runUpdateSigningConfig(session *Session) error {
-	fmt.Printf("Updating signing config for %s\n", session.ProjectPath)
-
-	cfg, err := resolveSigningConfig(session.ProjectPath)
-	if err != nil {
-		return err
-	}
-
-	if err := applySigningConfig(session.ProjectPath, cfg); err != nil {
-		return err
-	}
-
-	fmt.Printf("  key.properties: %s/android/key.properties\n", session.ProjectPath)
-	fmt.Printf("  store file: %s\n", cfg.StoreFile)
-	fmt.Println("  build.gradle updated for release signing")
-	fmt.Println("  status: signing config updated")
-
-	return nil
-}
-
-func resolveSigningConfig(projectPath string) (SigningConfig, error) {
+func Resolve(projectPath string) (gradle.Properties, error) {
 	keyPropsPath := filepath.Join(projectPath, "android", "key.properties")
 	if cfg, err := readKeyProperties(keyPropsPath); err == nil {
 		return cfg, nil
 	}
 
 	for _, credPath := range candidateCredentialFiles(projectPath) {
-		if cfg, err := signingConfigFromCredentialsFile(credPath); err == nil {
+		if cfg, err := configFromCredentialsFile(credPath); err == nil {
 			return cfg, nil
 		}
 	}
 
-	return SigningConfig{}, fmt.Errorf("signing config not found: expected android/key.properties or a credentials file in home (e.g. ~/upload-keystore-upload-key.txt)")
+	return gradle.Properties{}, fmt.Errorf("signing config not found: expected android/key.properties or a credentials file in home (e.g. ~/upload-keystore-upload-key.txt)")
+}
+
+func Apply(projectPath string, cfg gradle.Properties) error {
+	return gradle.Apply(projectPath, cfg)
 }
 
 func candidateCredentialFiles(projectPath string) []string {
@@ -80,42 +59,13 @@ func candidateCredentialFiles(projectPath string) []string {
 	return paths
 }
 
-func applySigningConfig(projectPath string, cfg SigningConfig) error {
-	keyPropertiesPath := filepath.Join(projectPath, "android", "key.properties")
-	result := &KeystoreResult{
-		HomePath:      cfg.StoreFile,
-		Alias:         cfg.KeyAlias,
-		StorePassword: cfg.StorePassword,
-		KeyPassword:   cfg.KeyPassword,
-	}
-	if err := writeKeyProperties(keyPropertiesPath, result); err != nil {
-		return err
-	}
-	return updateGradleSigning(projectPath)
-}
-
-func updateGradleSigning(projectPath string) error {
-	androidDir := filepath.Join(projectPath, "android")
-	ktsPath := filepath.Join(androidDir, "app", "build.gradle.kts")
-	if _, err := os.Stat(ktsPath); err == nil {
-		return updateBuildGradleKTS(ktsPath)
-	}
-
-	gradlePath := filepath.Join(androidDir, "app", "build.gradle")
-	if _, err := os.Stat(gradlePath); err == nil {
-		return updateBuildGradleGroovy(gradlePath)
-	}
-
-	return fmt.Errorf("build.gradle.kts or build.gradle not found under android/app")
-}
-
-func readKeyProperties(path string) (SigningConfig, error) {
+func readKeyProperties(path string) (gradle.Properties, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return SigningConfig{}, err
+		return gradle.Properties{}, err
 	}
 
-	cfg := SigningConfig{}
+	cfg := gradle.Properties{}
 	for _, line := range strings.Split(string(data), "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
@@ -137,25 +87,25 @@ func readKeyProperties(path string) (SigningConfig, error) {
 		}
 	}
 
-	if err := validateSigningConfig(cfg); err != nil {
-		return SigningConfig{}, err
+	if err := validateConfig(cfg); err != nil {
+		return gradle.Properties{}, err
 	}
 	return cfg, nil
 }
 
-func signingConfigFromCredentialsFile(path string) (SigningConfig, error) {
+func configFromCredentialsFile(path string) (gradle.Properties, error) {
 	path = strings.TrimSpace(path)
 	if path == "" {
-		return SigningConfig{}, fmt.Errorf("empty credentials path")
+		return gradle.Properties{}, fmt.Errorf("empty credentials path")
 	}
 
 	file, err := os.Open(path)
 	if err != nil {
-		return SigningConfig{}, err
+		return gradle.Properties{}, err
 	}
 	defer file.Close()
 
-	cfg := SigningConfig{}
+	cfg := gradle.Properties{}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -171,26 +121,26 @@ func signingConfigFromCredentialsFile(path string) (SigningConfig, error) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return SigningConfig{}, err
+		return gradle.Properties{}, err
 	}
 
 	if cfg.StoreFile == "" {
-		return SigningConfig{}, fmt.Errorf("credentials file missing keystore path")
+		return gradle.Properties{}, fmt.Errorf("credentials file missing keystore path")
 	}
 	if cfg.KeyPassword == "" {
 		cfg.KeyPassword = cfg.StorePassword
 	}
 	if cfg.KeyAlias == "" {
-		cfg.KeyAlias = defaultKeyAlias
+		cfg.KeyAlias = gradle.DefaultUploadAlias
 	}
 
-	if err := validateSigningConfig(cfg); err != nil {
-		return SigningConfig{}, err
+	if err := validateConfig(cfg); err != nil {
+		return gradle.Properties{}, err
 	}
 	return cfg, nil
 }
 
-func validateSigningConfig(cfg SigningConfig) error {
+func validateConfig(cfg gradle.Properties) error {
 	if strings.TrimSpace(cfg.StoreFile) == "" {
 		return fmt.Errorf("store file is required")
 	}

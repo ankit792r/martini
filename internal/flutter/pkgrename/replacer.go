@@ -1,4 +1,4 @@
-package flutter
+package pkgrename
 
 import (
 	"fmt"
@@ -9,14 +9,14 @@ import (
 	"strings"
 )
 
-type replaceResult struct {
+type Result struct {
 	FilesUpdated  int
 	DirsRenamed   int
 	UpdatedFiles  []string
 	RenamedDirs   []string
 }
 
-func updatePackageName(projectPath, oldName, newName string) (*replaceResult, error) {
+func Update(projectPath, oldName, newName string) (*Result, error) {
 	info, err := os.Stat(projectPath)
 	if err != nil {
 		return nil, fmt.Errorf("project path: %w", err)
@@ -32,7 +32,7 @@ func updatePackageName(projectPath, oldName, newName string) (*replaceResult, er
 	oldSlash := packageToPath(oldName)
 	newSlash := packageToPath(newName)
 
-	result := &replaceResult{}
+	result := &Result{}
 	if err := replaceInFiles(projectPath, oldName, newName, oldSlash, newSlash, result); err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func replacePathSuffix(path, oldSuffix, newSuffix string) string {
 	return filepath.FromSlash(prefix + newSuffix)
 }
 
-func replaceInFiles(root, oldName, newName, oldSlash, newSlash string, result *replaceResult) error {
+func replaceInFiles(root, oldName, newName, oldSlash, newSlash string, result *Result) error {
 	return filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -128,7 +128,7 @@ func applyReplacements(content, oldName, newName, oldSlash, newSlash string) str
 	return content
 }
 
-func renamePackageDirs(root, oldSlash, newSlash string, result *replaceResult) error {
+func renamePackageDirs(root, oldSlash, newSlash string, result *Result) error {
 	if oldSlash == newSlash {
 		return nil
 	}
@@ -141,7 +141,7 @@ func renamePackageDirs(root, oldSlash, newSlash string, result *replaceResult) e
 	return renameMatchingPackageDirs(root, oldSlash, newSlash, result, renamed)
 }
 
-func renameAndroidSourcePackageDirs(root, oldSlash, newSlash string, result *replaceResult, renamed map[string]bool) error {
+func renameAndroidSourcePackageDirs(root, oldSlash, newSlash string, result *Result, renamed map[string]bool) error {
 	androidDir := filepath.Join(root, "android")
 	if _, err := os.Stat(androidDir); err != nil {
 		if os.IsNotExist(err) {
@@ -188,7 +188,7 @@ func isAndroidSourceRoot(path, name string) bool {
 	return strings.Contains(filepath.ToSlash(path), "/src/")
 }
 
-func renameMatchingPackageDirs(root, oldSlash, newSlash string, result *replaceResult, renamed map[string]bool) error {
+func renameMatchingPackageDirs(root, oldSlash, newSlash string, result *Result, renamed map[string]bool) error {
 	var dirs []string
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -225,7 +225,7 @@ func renameMatchingPackageDirs(root, oldSlash, newSlash string, result *replaceR
 	return nil
 }
 
-func movePackageDir(oldDir, newDir string, result *replaceResult, renamed map[string]bool) error {
+func movePackageDir(oldDir, newDir string, result *Result, renamed map[string]bool) error {
 	if renamed[oldDir] {
 		return nil
 	}

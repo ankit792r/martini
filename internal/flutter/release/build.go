@@ -1,4 +1,4 @@
-package flutter
+package release
 
 import (
 	"fmt"
@@ -7,8 +7,7 @@ import (
 	"path/filepath"
 )
 
-func runBuildRelease(session *Session) error {
-	projectPath := session.ProjectPath
+func Run(projectPath string) error {
 	if err := validateFlutterProject(projectPath); err != nil {
 		return err
 	}

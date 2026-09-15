@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"martini/internal/flutter/pkgrename"
 )
 
 func TestCommandsFromFlags(t *testing.T) {
@@ -30,10 +32,7 @@ func TestRunUpdatePackageName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	session := NewSession(dir)
-	session.SetAnswers(CmdUpdatePackageName, []string{"com.old.app", "com.new.app"})
-
-	if err := runUpdatePackageName(session); err != nil {
+	if err := pkgrename.Run(dir, []string{"com.old.app", "com.new.app"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -47,8 +46,7 @@ func TestRunUpdatePackageName(t *testing.T) {
 }
 
 func TestRunUpdatePackageNameMissingAnswers(t *testing.T) {
-	session := NewSession(t.TempDir())
-	if err := runUpdatePackageName(session); err == nil {
+	if err := pkgrename.Run(t.TempDir(), nil); err == nil {
 		t.Fatal("expected error for missing answers")
 	}
 }

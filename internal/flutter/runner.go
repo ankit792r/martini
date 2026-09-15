@@ -1,6 +1,13 @@
 package flutter
 
-import "fmt"
+import (
+	"fmt"
+
+	"martini/internal/flutter/keystore"
+	"martini/internal/flutter/pkgrename"
+	"martini/internal/flutter/release"
+	"martini/internal/flutter/signing"
+)
 
 func RunCommands(session *Session, selected []CommandID) error {
 	for _, id := range selected {
@@ -11,25 +18,21 @@ func RunCommands(session *Session, selected []CommandID) error {
 
 		fmt.Printf("\nRunning: %s\n", cmd.Label)
 
+		var err error
 		switch id {
 		case CmdUpdatePackageName:
-			if err := runUpdatePackageName(session); err != nil {
-				return err
-			}
+			err = pkgrename.Run(session.ProjectPath, session.AnswersFor(CmdUpdatePackageName))
 		case CmdGenerateUploadKeystore:
-			if err := runGenerateUploadKeystore(session); err != nil {
-				return err
-			}
+			err = keystore.Run(session.ProjectPath, session.AnswersFor(CmdGenerateUploadKeystore))
 		case CmdUpdateSigningConfig:
-			if err := runUpdateSigningConfig(session); err != nil {
-				return err
-			}
+			err = signing.Run(session.ProjectPath)
 		case CmdBuildRelease:
-			if err := runBuildRelease(session); err != nil {
-				return err
-			}
+			err = release.Run(session.ProjectPath)
 		default:
 			return fmt.Errorf("unsupported command: %s", id)
+		}
+		if err != nil {
+			return err
 		}
 	}
 

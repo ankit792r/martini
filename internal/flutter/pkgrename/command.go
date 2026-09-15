@@ -1,12 +1,11 @@
-package flutter
+package pkgrename
 
 import (
 	"fmt"
 	"strings"
 )
 
-func runUpdatePackageName(session *Session) error {
-	answers := session.AnswersFor(CmdUpdatePackageName)
+func Run(projectPath string, answers []string) error {
 	if len(answers) < 2 {
 		return fmt.Errorf("update package name: missing old or new package name")
 	}
@@ -17,11 +16,11 @@ func runUpdatePackageName(session *Session) error {
 		return fmt.Errorf("update package name: old and new package names are required")
 	}
 
-	fmt.Printf("Updating package name in %s\n", session.ProjectPath)
+	fmt.Printf("Updating package name in %s\n", projectPath)
 	fmt.Printf("  old package: %s\n", oldName)
 	fmt.Printf("  new package: %s\n", newName)
 
-	result, err := updatePackageName(session.ProjectPath, oldName, newName)
+	result, err := Update(projectPath, oldName, newName)
 	if err != nil {
 		return err
 	}
