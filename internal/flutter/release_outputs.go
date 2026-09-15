@@ -1,6 +1,7 @@
 package flutter
 
 import (
+	"archive/zip"
 	"crypto/sha1"
 	"fmt"
 	"io"
@@ -8,7 +9,10 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 )
+
+const releaseOutputsFileName = "release-outputs.md"
 
 type ReleaseArtifact struct {
 	Name string
@@ -83,7 +87,7 @@ func fileSHA1(path string) (string, error) {
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-func writeReleaseOutputsMarkdown(path string, artifacts []ReleaseArtifact) error {
+func releaseOutputsMarkdown(artifacts []ReleaseArtifact) string {
 	var b strings.Builder
 	b.WriteString("### Release outputs\n\n")
 	b.WriteString("| apk | type | sha |\n")
@@ -92,5 +96,100 @@ func writeReleaseOutputsMarkdown(path string, artifacts []ReleaseArtifact) error
 		fmt.Fprintf(&b, "| %s | %s | `%s` |\n", artifact.Name, artifact.Type, artifact.SHA1)
 	}
 	b.WriteString("\n")
-	return os.WriteFile(path, []byte(b.String()), 0o644)
+	return b.String()
+}
+
+func writeReleaseOutputsMarkdown(path string, artifacts []ReleaseArtifact) error {
+	return os.WriteFile(path, []byte(releaseOutputsMarkdown(artifacts)), 0o644)
+}
+
+func createReleaseZip(projectPath string, artifacts []ReleaseArtifact) (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("home directory: %w", err)
+	}
+
+	zipPath := filepath.Join(home, releaseZipName(projectPath))
+	if err := os.MkdirAll(home, 0o755); err != nil {
+		return "", err
+	}
+
+	zipFile, err := os.Create(zipPath)
+	if err != nil {
+		return "", fmt.Errorf("create zip: %w", err)
+	}
+	defer zipFile.Close()
+
+	writer := zip.NewWriter(zipFile)
+	defer writer.Close()
+
+	if err := addStringToZip(writer, releaseOutputsFileName, releaseOutputsMarkdown(artifacts)); err != nil {
+		return "", err
+	}
+
+	for _, artifact := range artifacts {
+		if err := addFileToZip(writer, artifact.Path, artifact.Name); err != nil {
+			return "", err
+		}
+	}
+
+	if err := writer.Close(); err != nil {
+		return "", err
+	}
+	if err := zipFile.Close(); err != nil {
+		return "", err
+	}
+
+	return zipPath, nil
+}
+
+func releaseZipName(projectPath string) string {
+	base := filepath.Base(filepath.Clean(projectPath))
+	if base == "" || base == "." || base == string(os.PathSeparator) {
+		base = "flutter-app"
+	}
+	return fmt.Sprintf("%s-release-%s.zip", base, time.Now().Format("20060102-150405"))
+}
+
+func addStringToZip(writer *zip.Writer, name, content string) error {
+	header := &zip.FileHeader{
+		Name:   name,
+		Method: zip.Deflate,
+	}
+	header.SetModTime(time.Now())
+
+	entry, err := writer.CreateHeader(header)
+	if err != nil {
+		return err
+	}
+	_, err = io.WriteString(entry, content)
+	return err
+}
+
+func addFileToZip(writer *zip.Writer, sourcePath, entryName string) error {
+	file, err := os.Open(sourcePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	info, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	header, err := zip.FileInfoHeader(info)
+	if err != nil {
+		return err
+	}
+	header.Name = entryName
+	header.Method = zip.Deflate
+
+	entry, err := writer.CreateHeader(header)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(entry, file)
+	return err
 }

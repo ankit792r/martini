@@ -30,8 +30,8 @@ func runBuildRelease(session *Session) error {
 		return fmt.Errorf("no release artifacts found under build/app/outputs")
 	}
 
-	outputPath := filepath.Join(projectPath, "release-outputs.md")
-	if err := writeReleaseOutputsMarkdown(outputPath, artifacts); err != nil {
+	zipPath, err := createReleaseZip(projectPath, artifacts)
+	if err != nil {
 		return err
 	}
 
@@ -39,7 +39,7 @@ func runBuildRelease(session *Session) error {
 	for _, artifact := range artifacts {
 		fmt.Printf("    %s (%s)\n", artifact.Name, artifact.SHA1)
 	}
-	fmt.Printf("  release summary: %s\n", outputPath)
+	fmt.Printf("  release zip: %s\n", zipPath)
 	fmt.Println("  status: release build completed")
 
 	return nil
