@@ -29,27 +29,6 @@ if (keystorePropertiesFile.exists()) {
 `
 )
 
-func configureAndroidSigning(projectPath string, result *KeystoreResult) error {
-	androidDir := filepath.Join(projectPath, "android")
-	keyPropertiesPath := filepath.Join(androidDir, "key.properties")
-
-	if err := writeKeyProperties(keyPropertiesPath, result); err != nil {
-		return err
-	}
-
-	ktsPath := filepath.Join(androidDir, "app", "build.gradle.kts")
-	if _, err := os.Stat(ktsPath); err == nil {
-		return updateBuildGradleKTS(ktsPath)
-	}
-
-	gradlePath := filepath.Join(androidDir, "app", "build.gradle")
-	if _, err := os.Stat(gradlePath); err == nil {
-		return updateBuildGradleGroovy(gradlePath)
-	}
-
-	return fmt.Errorf("build.gradle.kts or build.gradle not found under android/app")
-}
-
 func writeKeyProperties(path string, result *KeystoreResult) error {
 	content := fmt.Sprintf(
 		"storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=%s\n",

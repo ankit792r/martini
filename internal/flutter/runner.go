@@ -21,8 +21,13 @@ func RunCommands(session *Session, selected []CommandID) error {
 				return err
 			}
 		case CmdUpdateSigningConfig:
-			fmt.Printf("  project: %s\n", session.ProjectPath)
-			fmt.Println("  status: update signing config (not implemented yet)")
+			if err := runUpdateSigningConfig(session); err != nil {
+				return err
+			}
+		case CmdBuildRelease:
+			if err := runBuildRelease(session); err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("unsupported command: %s", id)
 		}

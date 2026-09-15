@@ -14,6 +14,7 @@ var (
 	flutterUpdatePackageName   bool
 	flutterGenerateKeystore    bool
 	flutterUpdateSigningConfig bool
+	flutterBuildRelease        bool
 )
 
 var flutterCmd = &cobra.Command{
@@ -25,6 +26,7 @@ var flutterCmd = &cobra.Command{
 			"update-package-name":      flutterUpdatePackageName,
 			"generate-upload-keystore": flutterGenerateKeystore,
 			"update-signing-config":    flutterUpdateSigningConfig,
+			"build-release":            flutterBuildRelease,
 		}
 
 		preselected := flutter.CommandsFromFlags(flags)
@@ -45,4 +47,5 @@ func init() {
 	flutterCmd.Flags().BoolVar(&flutterUpdatePackageName, "update-package-name", false, "Update Gradle package name")
 	flutterCmd.Flags().BoolVar(&flutterGenerateKeystore, "generate-upload-keystore", false, "Generate upload keystore")
 	flutterCmd.Flags().BoolVar(&flutterUpdateSigningConfig, "update-signing-config", false, "Update signing config")
+	flutterCmd.Flags().BoolVar(&flutterBuildRelease, "build-release", false, "Build release APKs and AAB")
 }

@@ -20,7 +20,12 @@ func runGenerateUploadKeystore(session *Session) error {
 		return err
 	}
 
-	if err := configureAndroidSigning(session.ProjectPath, result); err != nil {
+	if err := applySigningConfig(session.ProjectPath, SigningConfig{
+		StoreFile:     result.HomePath,
+		StorePassword: result.StorePassword,
+		KeyPassword:   result.KeyPassword,
+		KeyAlias:      result.Alias,
+	}); err != nil {
 		return err
 	}
 

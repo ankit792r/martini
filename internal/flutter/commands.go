@@ -6,6 +6,7 @@ const (
 	CmdUpdatePackageName      CommandID = "update-package-name"
 	CmdGenerateUploadKeystore CommandID = "generate-upload-keystore"
 	CmdUpdateSigningConfig    CommandID = "update-signing-config"
+	CmdBuildRelease           CommandID = "build-release"
 )
 
 type PromptField struct {
@@ -48,6 +49,11 @@ var AllCommands = []Command{
 		ID:    CmdUpdateSigningConfig,
 		Label: "Update signing config",
 		Flag:  "update-signing-config",
+	},
+	{
+		ID:    CmdBuildRelease,
+		Label: "Build release APKs and AAB",
+		Flag:  "build-release",
 	},
 }
 

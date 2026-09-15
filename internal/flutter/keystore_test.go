@@ -93,7 +93,12 @@ android {
 		t.Fatal(err)
 	}
 
-	if err := configureAndroidSigning(dir, result); err != nil {
+	if err := applySigningConfig(dir, SigningConfig{
+		StoreFile:     result.HomePath,
+		StorePassword: result.StorePassword,
+		KeyPassword:   result.KeyPassword,
+		KeyAlias:      result.Alias,
+	}); err != nil {
 		t.Fatal(err)
 	}
 
