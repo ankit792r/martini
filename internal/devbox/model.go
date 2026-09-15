@@ -48,15 +48,9 @@ func newModel() model {
 	return model{
 		step:    stepProjectName,
 		mode:    modeInput,
-		env:     defaultEnv(),
+		env:     map[string]string{},
 		scripts: make(map[string][]string),
 		input:   newInput("Project name: "),
-	}
-}
-
-func defaultEnv() map[string]string {
-	return map[string]string{
-		"PATH": "$PATH:$HOME/.pub-cache/bin",
 	}
 }
 

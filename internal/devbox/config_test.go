@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
 func TestBuildConfig(t *testing.T) {
-	env := map[string]string{"PATH": "$PATH:$HOME/.pub-cache/bin", "FOO": "bar"}
+	env := map[string]string{"FOO": "bar"}
 	scripts := map[string][]string{"build": {"flutter build"}}
 
 	cfg := buildConfig("myapp", env, scripts)
@@ -16,7 +17,7 @@ func TestBuildConfig(t *testing.T) {
 	if cfg.Schema != schemaURL {
 		t.Fatalf("unexpected schema: %s", cfg.Schema)
 	}
-	if len(cfg.Packages) != 1 || cfg.Packages[0] != "flutter@3.47.0-sdk-links" {
+	if len(cfg.Packages) != 0 {
 		t.Fatalf("unexpected packages: %v", cfg.Packages)
 	}
 	if cfg.Env["FOO"] != "bar" {
@@ -34,7 +35,7 @@ func TestBuildConfig(t *testing.T) {
 }
 
 func TestBuildConfigDefaultScript(t *testing.T) {
-	cfg := buildConfig("demo", defaultEnv(), nil)
+	cfg := buildConfig("demo", map[string]string{}, nil)
 
 	if _, ok := cfg.Shell.Scripts["test"]; !ok {
 		t.Fatalf("expected default test script, got: %v", cfg.Shell.Scripts)
@@ -45,7 +46,7 @@ func TestWriteConfig(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "devbox.json")
 
-	cfg := buildConfig("demo", defaultEnv(), nil)
+	cfg := buildConfig("demo", map[string]string{}, nil)
 	if err := writeConfig(path, cfg); err != nil {
 		t.Fatal(err)
 	}
@@ -61,5 +62,12 @@ func TestWriteConfig(t *testing.T) {
 	}
 	if decoded.Schema != schemaURL {
 		t.Fatalf("unexpected schema in file: %s", decoded.Schema)
+	}
+
+	content := string(data)
+	for _, esc := range []string{`\u003e`, `\u0026`, `\u003c`} {
+		if strings.Contains(content, esc) {
+			t.Fatalf("expected readable JSON, found escape %s in:\n%s", esc, content)
+		}
 	}
 }

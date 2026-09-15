@@ -1,6 +1,7 @@
 package devbox
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -22,9 +23,8 @@ type Shell struct {
 
 func buildConfig(projectName string, env map[string]string, scripts map[string][]string) Config {
 	initHook := []string{
-		"echo 'Welcome to devbox!' > /dev/null",
 		"alias dev='devbox'",
-		fmt.Sprintf(`export PS1="(%s) [\$(pwd)] -> "`, projectName),
+		fmt.Sprintf(`export PS1="(%s) [\W] -> "`, projectName),
 	}
 
 	if len(scripts) == 0 {
@@ -45,10 +45,12 @@ func buildConfig(projectName string, env map[string]string, scripts map[string][
 }
 
 func writeConfig(path string, cfg Config) error {
-	data, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(cfg); err != nil {
 		return err
 	}
-	data = append(data, '\n')
-	return os.WriteFile(path, data, 0o644)
+	return os.WriteFile(path, buf.Bytes(), 0o644)
 }
