@@ -60,6 +60,7 @@ func validateFlutterProject(projectPath string) error {
 }
 
 func runFlutter(projectPath string, args ...string) error {
+	// cmd := exec.Command(flutterBinary(), args...)
 	cmd := exec.Command("flutter", args...)
 	cmd.Dir = projectPath
 	cmd.Stdout = os.Stdout

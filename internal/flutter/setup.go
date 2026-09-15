@@ -12,6 +12,11 @@ func Run(opts Options) error {
 		return fmt.Errorf("project path requires a command flag (e.g. --update-package-name)")
 	}
 
+	if !needsInteractive(opts) {
+		session := NewSession(opts.ProjectPath)
+		return RunCommands(session, opts.Preselected)
+	}
+
 	p := tea.NewProgram(
 		newModel(opts),
 		tea.WithInput(os.Stdin),
@@ -27,4 +32,23 @@ func Run(opts Options) error {
 		return nil
 	}
 	return m.err
+}
+
+func needsInteractive(opts Options) bool {
+	if len(opts.Preselected) == 0 {
+		return true
+	}
+	if opts.ProjectPath == "" {
+		return true
+	}
+	for _, id := range opts.Preselected {
+		cmd, ok := CommandByID(id)
+		if !ok {
+			continue
+		}
+		if len(cmd.Fields) > 0 {
+			return true
+		}
+	}
+	return false
 }
