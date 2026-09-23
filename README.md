@@ -13,6 +13,8 @@ Build a static binary and install it to your Go bin directory (`~/go/bin` by def
 
 ```bash
 ./build.sh
+# or
+make install
 ```
 
 Make sure `~/go/bin` is on your `PATH`.
@@ -70,7 +72,9 @@ Release builds produce a zip in your home directory with APKs, AAB, and SHA1 has
 ## Development
 
 ```bash
-go test ./...
+make check    # fmt, vet, test
+make build    # bin/martini
+make run      # go run .
 ```
 
 Cross-compile for another platform:

@@ -10,10 +10,10 @@ import (
 )
 
 type Result struct {
-	FilesUpdated  int
-	DirsRenamed   int
-	UpdatedFiles  []string
-	RenamedDirs   []string
+	FilesUpdated int
+	DirsRenamed  int
+	UpdatedFiles []string
+	RenamedDirs  []string
 }
 
 func Update(projectPath, oldName, newName string) (*Result, error) {

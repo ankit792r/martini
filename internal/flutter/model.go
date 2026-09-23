@@ -35,10 +35,10 @@ type model struct {
 }
 
 type Options struct {
-	ProjectPath          string
-	ProjectPathExplicit  bool
-	IconsPath            string
-	Preselected          []CommandID
+	ProjectPath         string
+	ProjectPathExplicit bool
+	IconsPath           string
+	Preselected         []CommandID
 }
 
 func newModel(opts Options) *model {

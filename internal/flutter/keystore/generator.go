@@ -32,13 +32,13 @@ type Config struct {
 }
 
 type Result struct {
-	HomePath      string
-	ProjectPath   string
-	Credentials   string
+	HomePath        string
+	ProjectPath     string
+	Credentials     string
 	CredentialsPath string
-	Alias         string
-	StorePassword string
-	KeyPassword   string
+	Alias           string
+	StorePassword   string
+	KeyPassword     string
 }
 
 func Generate(projectPath string, cfg Config) (*Result, error) {
@@ -163,7 +163,7 @@ func createJKS(cfg Config) ([]byte, *x509.Certificate, error) {
 	ks := keystore.New()
 	entry := keystore.PrivateKeyEntry{
 		CreationTime: time.Now(),
-		PrivateKey:     pkcs8,
+		PrivateKey:   pkcs8,
 		CertificateChain: []keystore.Certificate{
 			{Type: "X509", Content: certDER},
 		},
