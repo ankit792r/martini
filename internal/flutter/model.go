@@ -35,9 +35,10 @@ type model struct {
 }
 
 type Options struct {
-	ProjectPath string
-	IconsPath   string
-	Preselected []CommandID
+	ProjectPath          string
+	ProjectPathExplicit  bool
+	IconsPath            string
+	Preselected          []CommandID
 }
 
 func newModel(opts Options) *model {
@@ -52,7 +53,7 @@ func newModel(opts Options) *model {
 		selected:        selected,
 		selectedOrder:   order,
 		projectPath:     opts.ProjectPath,
-		skipProjectPath: opts.ProjectPath != "",
+		skipProjectPath: true,
 		session:         NewSession(opts.ProjectPath),
 	}
 

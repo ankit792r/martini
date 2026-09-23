@@ -34,9 +34,10 @@ var flutterCmd = &cobra.Command{
 
 		preselected := flutter.CommandsFromFlags(flags)
 		if err := flutter.Run(flutter.Options{
-			ProjectPath: flutterProjectPath,
-			IconsPath:   flutterIconsPath,
-			Preselected: preselected,
+			ProjectPath:         flutterProjectPath,
+			ProjectPathExplicit: cmd.Flags().Changed("path"),
+			IconsPath:           flutterIconsPath,
+			Preselected:         preselected,
 		}); err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			os.Exit(1)
@@ -47,7 +48,7 @@ var flutterCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(flutterCmd)
 
-	flutterCmd.Flags().StringVarP(&flutterProjectPath, "path", "p", "", "Flutter project path")
+	flutterCmd.Flags().StringVarP(&flutterProjectPath, "path", "p", "", "Flutter project path (default: current directory)")
 	flutterCmd.Flags().BoolVar(&flutterUpdatePackageName, "update-package-name", false, "Update Gradle package name")
 	flutterCmd.Flags().BoolVar(&flutterGenerateKeystore, "generate-upload-keystore", false, "Generate upload keystore")
 	flutterCmd.Flags().BoolVar(&flutterUpdateSigningConfig, "update-signing-config", false, "Update signing config")

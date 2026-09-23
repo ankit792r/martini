@@ -8,7 +8,13 @@ import (
 )
 
 func Run(opts Options) error {
-	if len(opts.Preselected) == 0 && opts.ProjectPath != "" {
+	resolved, err := ResolveProjectPath(opts.ProjectPath)
+	if err != nil {
+		return err
+	}
+	opts.ProjectPath = resolved
+
+	if len(opts.Preselected) == 0 && opts.ProjectPathExplicit {
 		return fmt.Errorf("project path requires a command flag (e.g. --update-package-name)")
 	}
 
@@ -39,9 +45,6 @@ func Run(opts Options) error {
 
 func needsInteractive(opts Options) bool {
 	if len(opts.Preselected) == 0 {
-		return true
-	}
-	if opts.ProjectPath == "" {
 		return true
 	}
 	for _, id := range opts.Preselected {

@@ -39,6 +39,7 @@ Interactive task picker, or run tasks directly with flags.
 
 ```bash
 martini flutter
+cd /path/to/flutter/project && martini flutter --build-release
 martini flutter --path /path/to/flutter/project --build-release
 ```
 
@@ -52,7 +53,7 @@ martini flutter --path /path/to/flutter/project --build-release
 
 Common flags:
 
-- `--path`, `-p` — Flutter project directory
+- `--path`, `-p` — Flutter project directory (defaults to the current working directory)
 - `--icons-path` — IconKitchen output directory (required with `--update-icons`)
 
 Examples:
