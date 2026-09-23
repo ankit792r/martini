@@ -9,15 +9,21 @@ A CLI for common post-development tasks: devbox project setup and Flutter Androi
 
 ## Install
 
-Build a static binary and install it to your Go bin directory (`~/go/bin` by default):
+Install for your user (recommended; uses `go install` → `~/go/bin` by default):
 
 ```bash
-./build.sh
+make install-user
 # or
-make install
+./build.sh
 ```
 
-Make sure `~/go/bin` is on your `PATH`.
+System-wide install (copies the built binary to `/usr/local/bin`):
+
+```bash
+sudo make install
+```
+
+Make sure `~/go/bin` (or your `GOBIN`) is on your `PATH` for user installs.
 
 You can also run without installing:
 
