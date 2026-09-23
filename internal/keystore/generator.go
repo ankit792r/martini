@@ -14,22 +14,13 @@ import (
 	"strings"
 	"time"
 
-	keystore "github.com/pavlo-v-chernykh/keystore-go/v4"
+	jks "github.com/pavlo-v-chernykh/keystore-go/v4"
 )
 
 const (
-	defaultKeyAlias    = "upload"
 	defaultValidityDay = 10000
 	defaultKeySize     = 2048
 )
-
-type Config struct {
-	Name          string
-	StorePassword string
-	KeyPassword   string
-	Alias         string
-	CommonName    string
-}
 
 type Result struct {
 	HomePath        string
@@ -39,20 +30,17 @@ type Result struct {
 	Alias           string
 	StorePassword   string
 	KeyPassword     string
+	FileName        string
 }
 
-func Generate(projectPath string, cfg Config) (*Result, error) {
-	if strings.TrimSpace(cfg.KeyPassword) == "" {
-		cfg.KeyPassword = cfg.StorePassword
-	}
-	if strings.TrimSpace(cfg.Alias) == "" {
-		cfg.Alias = defaultKeyAlias
-	}
-	if strings.TrimSpace(cfg.CommonName) == "" {
-		cfg.CommonName = "Android Upload"
-	}
+func Generate(projectStoreDir string, cfg Config) (*Result, error) {
+	cfg = cfg.Normalized()
 	if err := validateConfig(cfg); err != nil {
 		return nil, err
+	}
+
+	if err := os.MkdirAll(projectStoreDir, 0o755); err != nil {
+		return nil, fmt.Errorf("project store directory: %w", err)
 	}
 
 	homeDir, err := os.UserHomeDir()
@@ -60,14 +48,9 @@ func Generate(projectPath string, cfg Config) (*Result, error) {
 		return nil, fmt.Errorf("home directory: %w", err)
 	}
 
-	androidDir := filepath.Join(projectPath, "android")
-	if _, err := os.Stat(androidDir); err != nil {
-		return nil, fmt.Errorf("android directory not found at %s", androidDir)
-	}
-
 	fileName := cfg.Name + ".jks"
 	homeKeystorePath := filepath.Join(homeDir, fileName)
-	projectKeystorePath := filepath.Join(androidDir, fileName)
+	projectKeystorePath := filepath.Join(projectStoreDir, fileName)
 
 	if _, err := os.Stat(homeKeystorePath); err == nil {
 		return nil, fmt.Errorf("keystore already exists: %s", homeKeystorePath)
@@ -102,6 +85,7 @@ func Generate(projectPath string, cfg Config) (*Result, error) {
 		Alias:           cfg.Alias,
 		StorePassword:   cfg.StorePassword,
 		KeyPassword:     cfg.KeyPassword,
+		FileName:        fileName,
 	}, nil
 }
 
@@ -160,11 +144,11 @@ func createJKS(cfg Config) ([]byte, *x509.Certificate, error) {
 		return nil, nil, fmt.Errorf("marshal private key: %w", err)
 	}
 
-	ks := keystore.New()
-	entry := keystore.PrivateKeyEntry{
+	ks := jks.New()
+	entry := jks.PrivateKeyEntry{
 		CreationTime: time.Now(),
 		PrivateKey:   pkcs8,
-		CertificateChain: []keystore.Certificate{
+		CertificateChain: []jks.Certificate{
 			{Type: "X509", Content: certDER},
 		},
 	}
@@ -223,32 +207,4 @@ func copyFile(src, dst string) error {
 		return err
 	}
 	return out.Close()
-}
-
-func configFromAnswers(answers []string) Config {
-	cfg := Config{
-		Name:       "upload-keystore",
-		Alias:      defaultKeyAlias,
-		CommonName: "Android Upload",
-	}
-
-	if len(answers) > 0 && strings.TrimSpace(answers[0]) != "" {
-		cfg.Name = strings.TrimSpace(strings.TrimSuffix(answers[0], ".jks"))
-	}
-	if len(answers) > 1 {
-		cfg.StorePassword = strings.TrimSpace(answers[1])
-	}
-	if len(answers) > 2 && strings.TrimSpace(answers[2]) != "" {
-		cfg.KeyPassword = strings.TrimSpace(answers[2])
-	} else {
-		cfg.KeyPassword = cfg.StorePassword
-	}
-	if len(answers) > 3 && strings.TrimSpace(answers[3]) != "" {
-		cfg.Alias = strings.TrimSpace(answers[3])
-	}
-	if len(answers) > 4 && strings.TrimSpace(answers[4]) != "" {
-		cfg.CommonName = strings.TrimSpace(answers[4])
-	}
-
-	return cfg
 }

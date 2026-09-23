@@ -41,6 +41,19 @@ Interactive wizard that creates a `devbox.json` in the current directory with pr
 martini devbox
 ```
 
+### `martini android`
+
+Commands for native Android Studio projects (not Flutter).
+
+```bash
+martini android --generate-upload-keystore
+cd /path/to/android/project && martini android --generate-upload-keystore
+```
+
+Creates an upload JKS in the project root and in your home directory, writes `key.properties`, and saves credentials to `~/{keystore-name}-upload-key.txt`. It does **not** modify `build.gradle.kts` (use this when Gradle signing is already configured).
+
+Flags: `--generate-upload-keystore`, `--path`, `--keystore-name`, `--store-password`, `--key-password`, `--key-alias`, `--common-name`. Omitted keystore fields are prompted interactively.
+
 ### `martini flutter`
 
 Interactive task picker, or run tasks directly with flags.
